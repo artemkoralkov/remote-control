@@ -24,47 +24,65 @@ wss.on("connection", (ws) => {
     const [command, length, width] = data.toString().split(" ");
     console.log(`Received ${data}`);
     const { x, y } = robot.getMousePos();
+    let scrn;
     switch (command) {
       case "mouse_position":
-        duplex.write(`mouse_position ${x},${y}`);
+        duplex.write(`mouse_position ${x},${y} \0`);
         console.log(`Send: mouse_position ${x},${y}`);
         break;
       case "mouse_up":
-        duplex.write("mouse_up");
+        duplex.write(`${command} \0`);
         robot.moveMouseSmooth(x, y - parseInt(length));
+        console.log(`Moved mouse to ${length}px up`);
         break;
       case "mouse_down":
-        duplex.write("mouse_down");
+        duplex.write(`${command} \0`);
         robot.moveMouseSmooth(x, y + parseInt(length));
+        console.log(`Moved mouse to ${length}px down`);
         break;
       case "mouse_left":
-        duplex.write("mouse_left");
+        duplex.write(`${command} \0`);
         robot.moveMouseSmooth(x - parseInt(length), y);
+        console.log(`Moved mouse to ${length}px left`);
         break;
       case "mouse_right":
-        duplex.write("mouse_right");
+        duplex.write(`${command} \0`);
         robot.moveMouseSmooth(x + parseInt(length), y);
+        console.log(`Moved mouse to ${length}px right`);
         break;
       case "draw_rectangle":
-        duplex.write("draw_rectangle");
+        duplex.write(`${command} \0`);
         drawRectangle(parseInt(width), parseInt(length));
+        console.log(`Draw ${width}px by ${length}px rectangle`);
         break;
       case "draw_square":
-        duplex.write("draw_square");
+        duplex.write(`${command} \0`);
         drawSquare(parseInt(length));
+        console.log(`Draw ${length}px square`);
         break;
       case "draw_circle":
-        duplex.write("draw_circle");
+        duplex.write(`${command} \0`);
         drawCircle(parseInt(length));
+        console.log(`Draw circle with ${length}px radius`);
         break;
       case "prnt_scrn":
-        duplex.write(await printScreen());
-        console.log(`Send: ${await printScreen()}`);
+        scrn = await printScreen();
+        duplex.write(`${scrn} \0`);
+        console.log(`Send: ${scrn}`);
+        break;
+      default:
+        duplex.write("Invalid command");
+        console.log("Invalid command");
         break;
     }
   });
   ws.on("close", () => {
+    duplex.destroy();
     console.log("Connection close");
+  });
+  wss.on("close", () => {
+    duplex.destroy();
+    console.log("WebSocketServer stoped");
   });
 });
 
